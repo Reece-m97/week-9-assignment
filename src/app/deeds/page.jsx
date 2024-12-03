@@ -8,21 +8,21 @@ export default async function DeedLogPage({ searchParams }) {
 
   // Fetch deeds from the database
   const deedsQuery = `
-    SELECT 
+SELECT 
       c_deeds.id AS deed_id,
-       c_deeds.description,
+      c_deeds.description,
       c_deeds.category,
-       c_deeds.date,
-       c_users.villain_name AS villain_name,
-      COUNT( c_reactions.id) AS evil_laughs,
-      COUNT( c_comments.id) AS comments_count
-    FROM  c_deeds
-    LEFT JOIN  c_users ON  c_deeds.user_id =  c_users.id
-    LEFT JOIN  c_reactions ON  c_deeds.id =  c_reactions.deed_id
-    LEFT JOIN  c_comments ON  c_deeds.id =  c_comments.deed_id
-    GROUP BY  c_deeds.id,  c_users.villain_name
-    ORDER BY  c_deeds.date ${sortOrder};
-  `;
+      c_deeds.date,
+      c_users.villain_name AS villain_name,
+      COUNT(c_reactions.id) AS evil_laughs,
+      COUNT(c_comments.id) AS comments_count
+  FROM c_deeds
+  LEFT JOIN c_users ON c_deeds.clerk_id = c_users.clerk_id
+  LEFT JOIN c_reactions ON c_deeds.id = c_reactions.deed_id
+  LEFT JOIN c_comments ON c_deeds.id = c_comments.deed_id
+  GROUP BY c_deeds.id, c_users.villain_name
+  ORDER BY c_deeds.date ${sortOrder};
+`;
 
   const { rows: deeds } = await db.query(deedsQuery);
 

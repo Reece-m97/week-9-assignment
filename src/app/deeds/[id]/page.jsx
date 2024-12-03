@@ -3,9 +3,18 @@ import CommentForm from "@/components/CommentForm";
 import { db } from "@/auth/db";
 import React from "react";
 
-// Fetch deed data from the database
-async function fetchDeedAndComments(deedId) {
-  const deedQuery = `
+export default async function SingleDeedPage({ params }) {
+  const { id } = await params;
+
+  const { deed, comments } = await fetchDeedAndComments(id);
+
+  if (!deed) {
+    return <p>Deed not found.</p>;
+  }
+
+  // Fetch deed data from the database
+  async function fetchDeedAndComments(deedId) {
+    const deedQuery = `
     SELECT 
       c_deeds.id AS deed_id,
       c_deeds.description,
@@ -14,39 +23,30 @@ async function fetchDeedAndComments(deedId) {
       c_users.villain_name AS villain_name,
       COUNT(c_reactions.id) AS evil_laughs,
       COUNT(c_comments.id) AS comments_count
-    FROM c_deeds
-    LEFT JOIN c_users ON c_deeds.user_id = c_users.id
-    LEFT JOIN c_reactions ON c_deeds.id = c_reactions.deed_id
-    LEFT JOIN c_comments ON c_deeds.id = c_comments.deed_id
+  FROM c_deeds
+  LEFT JOIN c_users ON c_deeds.clerk_id = c_users.clerk_id
+  LEFT JOIN c_reactions ON c_deeds.id = c_reactions.deed_id
+  LEFT JOIN c_comments ON c_deeds.id = c_comments.deed_id
     WHERE c_deeds.id = $1
     GROUP BY c_deeds.id, c_users.villain_name;
   `;
-  const commentQuery = `
+    const commentQuery = `
     SELECT c_comments.id, c_comments.comment, c_comments.date, c_users.villain_name AS commenter_name
     FROM c_comments
-    LEFT JOIN c_users ON c_comments.user_id = c_users.id
+    LEFT JOIN c_users ON c_comments.clerk_id = c_users.clerk_id
     WHERE c_comments.deed_id = $1
     ORDER BY c_comments.date DESC;
   `;
 
-  const [deedResult, commentsResult] = await Promise.all([
-    db.query(deedQuery, [deedId]),
-    db.query(commentQuery, [deedId]),
-  ]);
+    const [deedResult, commentsResult] = await Promise.all([
+      db.query(deedQuery, [deedId]),
+      db.query(commentQuery, [deedId]),
+    ]);
 
-  const deed = deedResult.rows[0];
-  const comments = commentsResult.rows;
+    const deed = deedResult.rows[0];
+    const comments = commentsResult.rows;
 
-  return { deed, comments };
-}
-
-export default async function SingleDeedPage({ params }) {
-  const { id } = await params;
-
-  const { deed, comments } = await fetchDeedAndComments(id);
-
-  if (!deed) {
-    return <p>Deed not found.</p>;
+    return { deed, comments };
   }
 
   return (

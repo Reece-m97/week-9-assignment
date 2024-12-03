@@ -17,7 +17,7 @@ export default async function CommentForm({ deedId }) {
 
     // Insert comment into the database
     await db.query(
-      `INSERT INTO comments (deed_id, user_id, comment) VALUES ($1, $2, $3)`,
+      `INSERT INTO c_comments (deed_id, clerk_id, comment) VALUES ($1, $2, $3)`,
       [deedId, userId, comment]
     );
 

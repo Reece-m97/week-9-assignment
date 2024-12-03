@@ -1,71 +1,59 @@
 import { Webhook } from "svix";
-import { headers } from "next/headers";
-import { db } from "@/auth/db"; // Import the database instance
+import { db } from "@/auth/db";
 
 export async function POST(req) {
-  const SIGNING_SECRET = process.env.SIGNING_SECRET;
-
-  if (!SIGNING_SECRET) {
-    throw new Error(
-      "Error: Please add SIGNING_SECRET from Clerk Dashboard to .env or .env.local"
-    );
-  }
-
-  // Create new Svix instance with secret
-  const wh = new Webhook(SIGNING_SECRET);
+  const signingSecret = process.env.SIGNING_SECRET || "your-secret";
 
   // Get headers
-  const headerPayload = await headers();
-  const svix_id = headerPayload.get("svix-id");
-  const svix_timestamp = headerPayload.get("svix-timestamp");
-  const svix_signature = headerPayload.get("svix-signature");
+  const svix_id = req.headers.get("svix-id") || "";
+  const svix_timestamp = req.headers.get("svix-timestamp") || "";
+  const svix_signature = req.headers.get("svix-signature") || "";
 
-  // If there are no headers, error out
-  if (!svix_id || !svix_timestamp || !svix_signature) {
-    return new Response("Error: Missing Svix headers", {
-      status: 400,
-    });
-  }
+  // Get raw body
+  const body = await req.text();
 
-  // Get body
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  const svix = new Webhook(signingSecret);
 
-  let evt;
+  let msg;
 
-  // Verify payload with headers
+  // Verify the payload
   try {
-    evt = wh.verify(body, {
+    msg = svix.verify(body, {
       "svix-id": svix_id,
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
     });
   } catch (err) {
-    console.error("Error: Could not verify webhook:", err);
-    return new Response("Error: Verification error", {
+    console.error("Webhook verification failed:", err);
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  console.log("Webhook verified:", msg);
+
+  // Extract id and username
+  const { id, username } = msg.data;
+
+  if (!id || !username) {
+    console.error("Missing id or username in webhook payload");
+    return new Response("Bad Request: Missing required fields", {
       status: 400,
     });
   }
 
-  // Do something with payload
-  const { id: userId, username } = evt.data; // Extract userId and username from the payload
-  const eventType = evt.type;
+  try {
+    // Insert into database
+    const result = await db.query(
+      `INSERT INTO c_users (clerk_id, villain_name)
+       VALUES ($1, $2)
+       RETURNING *;`,
+      [id, username]
+    );
 
-  console.log(
-    `Received webhook with ID ${userId} and event type of ${eventType}`
-  );
-  console.log("Webhook payload:", body);
-
-  if (eventType === "user.created") {
-    try {
-      const query = `INSERT INTO c_users (clerk_id, villain_name) VALUES ($1, $2)`;
-      await db.query(query, [userId, username]); // Insert userId and username into the database
-      console.log(`User created: ${username} (${userId})`);
-    } catch (error) {
-      console.error("Database insertion error:", error);
-      return new Response("Error: Database error", { status: 500 });
-    }
+    console.log("Inserted user into database:", result.rows[0]);
+  } catch (err) {
+    console.error("Database insertion failed:", err);
+    return new Response("Internal Server Error", { status: 500 });
   }
 
-  return new Response("Webhook received", { status: 200 });
+  return new Response("OK", { status: 200 });
 }

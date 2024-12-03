@@ -18,14 +18,11 @@ export default function Navbar() {
       <div className={styles.logo}>Villain Hub</div>
       <ul className={styles.navbar_links}>
         <li className={styles.navLinks}>
-          <Link href="/dashboard">Dashboard</Link>
-        </li>
-        <li>
           <Link href="/profile">Profile</Link>
         </li>
-        {/* <li>
-          <Link href="/leaderboard">Leaderboard</Link>
-        </li> */}
+        <li>
+          <Link href="/villains">Villains</Link>
+        </li>
         <li>
           <Link href="/deeds">Deed Log</Link>
         </li>
