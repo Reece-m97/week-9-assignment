@@ -9,7 +9,7 @@ export async function POST(req) {
   const svix_timestamp = req.headers.get("svix-timestamp") || "";
   const svix_signature = req.headers.get("svix-signature") || "";
 
-  // Get raw body
+  // Get body
   const body = await req.text();
 
   const svix = new Webhook(signingSecret);

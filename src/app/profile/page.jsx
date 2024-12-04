@@ -4,7 +4,7 @@ import Link from "next/link";
 import DeleteDeedButton from "@/components/DeleteDeedButton";
 import { revalidatePath } from "next/cache";
 
-// Server action to update the backstory
+// Update the backstory
 export async function updateBackstoryAction(formData) {
   "use server";
 

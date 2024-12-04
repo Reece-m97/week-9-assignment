@@ -8,7 +8,6 @@ export default function DeleteDeedButton({ deedId }) {
     try {
       await deleteDeed(deedId);
       console.log(`Deed ${deedId} deleted successfully`);
-      // Optionally: Trigger a refresh or notify the user
     } catch (error) {
       console.error("Error deleting deed:", error);
     }
