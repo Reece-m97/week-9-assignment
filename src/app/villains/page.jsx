@@ -9,6 +9,7 @@ export default async function VillainsPage({ searchParams }) {
 SELECT 
       c_users.id AS user_id,
       c_users.villain_name AS villain_name,
+      c_users.backstory,
       COUNT(c_deeds.id) AS deeds_count
   FROM c_users
   LEFT JOIN c_deeds ON c_users.clerk_id = c_deeds.clerk_id
@@ -59,6 +60,10 @@ SELECT
           <li key={user.user_id} className="p-4 border rounded-lg shadow">
             <Link href={`/villains/${user.user_id}`}>
               <h3 className="font-semibold">{user.villain_name}</h3>
+              <p className="mt-2 text-gray-700">
+                <strong className="font-semibold">Backstory:</strong>{" "}
+                {user.backstory}
+              </p>
               <p>
                 <strong>Deeds:</strong> {user.deeds_count}
               </p>
